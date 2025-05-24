@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     if (pid == 0) {
      /* codice eseguito dal processo figlio*/
         printf("DEBUG-Esecuzione di ls -l da parte del figlio con pid %d e con parametro %s\n", getpid(), argv[1]);
-        execlp("ls","-l",argv[1],(char*)0); // nei processi figli si usa sempre la versione con la p
+        execlp("ls","ls","-l",argv[1],(char*)0); // nei processi figli si usa sempre la versione con la p
         // in questo caso passiamo il comando "ls -l $parametro" e come ultimo parametro passiamo un char pointer a 0 (zero terminatore)
 
         printf("Errore in execlp\n");
