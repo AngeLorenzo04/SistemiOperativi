@@ -53,8 +53,8 @@ int main(int argc, char* argv[]) {
                 exit(-1);
             }
             
-            while((nread=read(fd,&buffer,1)) == 1){
-                if(buffer == Cx){
+            while((nread=read(fd,&buffer,1)) == 1){ //Leggo il file un carattere per volta
+                if(buffer == Cx){ //controllo che i caratteri siano uguali
                     totale++;
                 }
             }
