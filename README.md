@@ -10,9 +10,9 @@ This repository contains a collection of exercises created while preparing for t
 
 The repository is organized into two main directories:
 
-- `c-exercises/` – Contains exercises written in **C**, focusing on system calls such as `fork`, `exec`, `wait`, `pipe`, `open`, `read`, and `write`, among others. These exercises aim to deepen understanding of process management, inter-process communication, and file descriptors.
+- `c/` – Contains exercises written in **C**, focusing on system calls such as `fork`, `exec`, `wait`, `pipe`, `open`, `read`, and `write`, among others. These exercises aim to deepen understanding of process management, inter-process communication, and file descriptors.
 
-- `shell-exercises/` – Contains **shell scripts** written in `bash`, covering basic to intermediate scripting, file handling, control structures, and process management.
+- `Shell/` – Contains **shell scripts** written in `bash`, covering basic to intermediate scripting, file handling, control structures, and process management.
 
 ## 📚 About the Course
 
