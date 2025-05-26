@@ -21,3 +21,5 @@ The exercises are based on topics covered in the Operating Systems course held b
 ---
 
 Feel free to explore and adapt the exercises for your own exam preparation or review.
+
+**REMEMBER COMMENTS ARE IMPORTANT**
