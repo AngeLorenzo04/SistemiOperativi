@@ -61,8 +61,9 @@ int main(int argc, char* argv[]) {
       		for (int k = 0; k < N; k++)
       		{	/* ogni figlio NON legge da nessuna pipe e scrive solo sulla sua che e' la n-esima! */
         		close(piped[k][0]);
-        		if (k != n)
+        		if (k != n){
           			close(piped[k][1]);
+                }
       		}
 
 

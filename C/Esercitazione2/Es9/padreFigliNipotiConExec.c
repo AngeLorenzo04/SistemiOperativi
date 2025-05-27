@@ -43,12 +43,13 @@ int main(int argc, char* argv[]) {
             }
             strcpy(FOut,argv[n+1]);
             strcat(FOut,".sort");
-
-                         	if ((fdw=creat(FOut, PERM)) < 0)
-                	{
-                		printf("DEBUG-FILGIO Impossibile creare il file %s\n", FOut);
-                        	exit(-1);
-                	}
+            
+            /*Creazione del file */
+            if ((fdw=creat(FOut, PERM)) < 0)
+            {
+            	printf("DEBUG-FILGIO Impossibile creare il file %s\n", FOut);
+                	exit(-1);
+            }
 			/* chiudiamo il file creato dato che comunque il figlio non lo usa */
 			close(fdw);
 
