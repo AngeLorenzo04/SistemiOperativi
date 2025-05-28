@@ -50,6 +50,8 @@ int main(int argc, char* argv[]) {
            printf("ERRORE: parametro %s non valido\nSUGGERIMENTO: inserire il nome di un file\n",argv[i+1]);
            exit(2);
         }
+
+        close(fd);
     }
 
 
@@ -102,17 +104,13 @@ int main(int argc, char* argv[]) {
                 close(pipePadreFigli[i][1]);
                 close(pipeFigloNipote[0]);
                 
-                /* Ridirezione standard input */
-                close(0); /*chiusa STDIN*/
-                open(argv[i+1],O_RDONLY); /* apertura del file */
-                
                 /* Ridirezione standard output */
                 close(1);/*Chiusura STDOUT */
                 dup(pipeFigloNipote[1]); /* duplicazione della pipe */
                 
                 close(pipeFigloNipote[1]);/* chiudo il doppione */
 
-                execlp("sort","sort","-f",(char *)0);
+                execlp("sort","sort","-f",argv[i+1],(char*)0);
 
                 /*NEL CASO EXECLP NON VADA A BUON FINE  */
                 exit(-1);
@@ -122,7 +120,7 @@ int main(int argc, char* argv[]) {
             j=0;
             while (read(pipeFigloNipote[0],S.c3 + j,1) == 1){
                 if(S.c3[j] == '\n'){ /* Leggi fino la prima riga */
-                    S.c1 = j + 1;
+                    S.c2 = j + 1;
                     break;
                 }else j++;
             }
@@ -140,7 +138,7 @@ int main(int argc, char* argv[]) {
                 /* selezione degli 8 bit piu’ significativi */
                 ritorno &= 0xFF;
                 printf("DEBUG-FIGLIO il processo nipote %d ha ritornato %d\n",pidNipote,ritorno);
-                S.c2 = pidNipote;
+                S.c1 = pidNipote;
 
                 write(pipePadreFigli[i][1],&S,sizeof(S));
             }
