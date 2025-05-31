@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
 	   exit(3);
 	}
 	/* Creazione delle N pipe */
-	for(n=0;n<N+1;n++){
+	for(n=0;n<N;n++){
 	   if(pipe(pipePadreFiglio[n]) < 0 ){
 		  printf("ERRORE: qualcosa e' andato storto nella creazione delle pipe\n");
 		  exit(4);
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
 			}
 		 
 			/* controllo che il parametro sia un file */
-			if((Fn=open(argv[n+1],O_RDWR)) < 0 ){ //APRO IL FILE
+			if((Fn=open(argv[n+1],O_RDONLY)) < 0 ){ //APRO IL FILE
 			   printf("ERRORE: parametro %s non valido\nSUGGERIMENTO: inserire il nome di un file\n",argv[n+1]);
 			   exit(-1);
 			}
@@ -122,13 +122,12 @@ int main(int argc, char* argv[]) {
 				}
 
 				read(Fn,&Cx,1); /* Leggo il carattere dal file e lo salvo in Cx*/
-				write(pipePadreFiglio[n][1],&Cx,1); /* Scrivo al padre il carattere che ho trovato */
-				printf("DEBUG: Sono il figlio %d di indice %d e ho finito di leggere il file %s\n", getpid(), n, argv[n+1]); 
+				printf("DEBUG: figlio %d ha letto carattere %c dal file %s\n", n, Cx, argv[n+1]); 
+				write(pipeFiglioPadre[n][1],&Cx,1); /* Scrivo al padre il carattere che ho trovato */
 			}
 
-
-		 exit(0);
-		
+			printf("DEBUG: Sono il figlio %d di indice %d e ho letto di leggere il file %s\n", getpid(), n, argv[n+1]); 
+			exit(0);
 		}
 
 	}
@@ -140,7 +139,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* controllo che il parametro sia un file */
-	if((AF=open(argv[argc-1],O_RDWR)) < 0 ){ //APRO IL FILE
+	if((AF=open(argv[argc-1],O_RDONLY)) < 0 ){ //APRO IL FILE
 	   printf("ERRORE: parametro %s non valido\nSUGGERIMENTO: inserire il nome di un file\n",argv[argc-1]);
 	   exit(-1);
 	}
@@ -157,7 +156,7 @@ int main(int argc, char* argv[]) {
 				read(pipeFiglioPadre[n][0],&Cx,1);
                			/* printf("SONO IL PADRE: HO LETTO il carattere %c e il figlio %c\n", ch, c);  */
 				if (Cx != c)
-              			{
+				{
 					/* i caratteri sono diversi e quindi bisogna resettare il valore corrispondente di confronto */
 					/* printf("DEBUG-SONO IL PADRE: HO LETTO il carattere %c e il figlio %c e quindi mi segno che non devo piu'ù mandare indicazione a questo figlio %d\n", ch, c, pid[i]);  */
 					confronto[n]=0;
@@ -167,8 +166,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	for(n=0;n<N;n++){
-		if(confronto[n] != 1){
-			kill(pid[n],SIGKILL);
+		if(confronto[n] == 0){
+			kill(pid[n], SIGKILL);
 		}else{
 			token = 't';
 			write(pipePadreFiglio[n][1],&token,1);
