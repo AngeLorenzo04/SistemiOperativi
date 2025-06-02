@@ -1,168 +1,135 @@
-/* Soluzione della parte C del compito del 13 Luglio 2022 */
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h> 
-#include <sys/stat.h>
+#include <stdio.h> //Standard I/O: printf, BUFSIZ
+#include <fcntl.h> //File CoNTrol: open, O_RDONLY, O_WRONLY, O_RDWR, O_CREAT(crea se non esiste), O_APPEND(solo R o RW)
+//O_TRUNC(distrugge contenuto se esiste, O_EXCL(fallisce se il file esiste gia'), O_NDELAY (non bloccante per FIFO e pipe in W)
+#include <stdlib.h> //STanDard LIBrary: exit, malloc, calloc, atoi
+#include <unistd.h> //UNIx Standard: read, write, close, SEEK_SET, SEEK_CUR, SEEK_END
+#include <string.h> //STRING: strlen, strcpy, strcat
+#include <sys/stat.h> //SYStem STATus: stat, fstat, S_IFMT, S_IFDIR, S_IFREG
+#include <sys/wait.h> //SYStem WAIT: wait
+#include <errno.h> //ERror NUmber: errno
+#include <sys/types.h> //SYStem TYPES: pid_t
+#include <ctype.h> //ISoType: isdigit, isalpha, isalnum
 #include <signal.h>
-#include <string.h>
-#include <fcntl.h>
-#include <ctype.h>
+#define PERM 077 /*Permessi da dare al file creato*/
+typedef int pipe_t[2]; /* Tipo per creare più pipe */
 
-/* definizione del TIPO pipe_t come array di 2 interi */
-typedef int pipe_t[2];
-
-int main (int argc, char **argv)
-{
-   int Q; 				/* numero di file/processi */
-   /* ATTENZIONE NOME Q imposto dal testo! */
-   int pid;				/* pid per fork */
-   pipe_t *pipes;			/* array di Q+1 pipe usate a ring da primo figlio, a secondo figlio .... ultimo figlio e poi padre e quindi di nuovo da primo figlio: ogni processo legge dalla pipe q e scrive sulla pipe q+1; il padre legge da pipe Q e scrive su pipe 0! */
-   int q,j; 				/* indici */
-   /* ATTENZIONE NOME q imposto dal testo! */
-   int L;				/* per valore numero linee del file */
-   /* ATTENZIONE NOME L imposto dal testo! */
-   int fd; 				/* file descriptor */
-   char ch;        			/* carattere letto dai figli dall'unico file */
-   int nrChar;				/* contatore occorrenze del carattere cercato per ogni linea */
-   char ok;	      			/* carattere letto dai figli dalla pipe precedente e scritto su quella successiva: N.B. valore non importante! */
-   int nr,nw;              		/* variabili per salvare i valori di ritorno di read/write da/su pipe */
-   int pidFiglio, status, ritorno;	/* per valore di ritorno figli */
-
-	/* controllo sul numero di parametri: 1 file, una sua lunghezza in linea e almeno 2 caratteri */
-	if (argc < 5)
-	{
-		printf("Errore: Necessari per %s almeno 4 parametri (un file, la sua lunghezza in linea e almeno 2 caratteri e invece argc = %d\n", argv[0], argc);
-		exit(1);
-	}
-
-	/* ricaviamo il numero di linee del file e controlliamo che sia strettamente maggiore di 0 */
-	L = atoi(argv[2]);
-	if (L <= 0)
-	{
-		printf("Errore %s non numero intero strettamente positivo\n", argv[2]);
-		exit(2);
-	}
+int main(int argc, char* argv[]) {
 	
-	/* controlliamo che i parametri a partire dal terzo siano singoli parametri */
-	for (j=3; j<argc; j++)
-		if (strlen(argv[j]) !=1)
-		{
-			printf("Il parametro %s NON e' un singolo carattere\n", argv[j] );
-			exit(3);
-		}
+	/*------ VARIABILI USATE ------*/
+	int Q; 					   /* Varia che contiene il numero di caratteri */
+	int F; 				   	   /* Variabile che contiene il filedescriptor del file  */
+	int L;					   /* Variabile che contiene la lunghezza in linee del file */
+	int pid;                   /* Variabile che conterrà il valore di ritorno di fork */
+	int status;                /* Variabile che conterrà lo stato di un figlio */
+	int pidFiglio;             /* Variabile che conterrà il pid del figlio*/
+	int ritorno;               /* Variabile che conterrà il ritrono del filgio*/
+	int n;                 	   /* Contatore */
+	int nChar;
+	char token;
+	char Cx;
+	pipe_t* pipeRing;   /* Canale di comunicazione padre-filgio */
 
-	Q = argc-3;	/* calcoliamo il numero di caratteri e quindi di processi da creare */
-	printf("DEBUG-Numero di processi da creare %d\n", Q);
 
-	/* il padre imposta di IGNORARE il segnale SIGPIPE */
+
+	/*Controllo parametri LASCO*/
+	if (argc < 4){
+		printf("ERRORE: numero parametri insufficiente\nSUGGERIMENTO: inserire almeno 3 argomenti\n");
+		exit(-1);
+	}
+
+
+	Q=argc-3;
+	if((L=atoi(argv[argc - Q - 1]) ) < 0){
+		printf("ERRORE: il parametro %s non valido\nSUGGERIMENTO: inserire un valore numerico\n",argv[argc - Q - 1]);
+		exit(-1);
+	}
+
+	/* allocazione dell'array di N pipe */
+	pipeRing = (pipe_t *)malloc((Q  + 1) * sizeof(pipe_t));
+	if (pipeRing == NULL) {
+	   printf("Errore nella allocazione array dinamico per le pipe\n");
+	   exit(3);
+	}
+	/* Creazione delle N pipe */
+	for(n=0;n<Q + 1;n++){
+	   if(pipe(pipeRing[n]) < 0 ){
+		  printf("ERRORE: qualcosa e' andato storto nella creazione delle pipe\n");
+		  exit(3);
+	   }
+	}
+
 	signal(SIGPIPE, SIG_IGN);
-
-	/* allocazione dell'array di Q+1 pipe: ATTENZIONE VANNO CREATE Q+1 pipe! */
-	if ((pipes=(pipe_t *)malloc((Q+1)*sizeof(pipe_t))) == NULL)
-	{
-		printf("Errore allocazione pipe\n");
-		exit(4); 
-	}
-
-	/* creazione delle Q+1 pipe usate a RING con anche il padre */
-	for (q=0; q<Q+1; q++)
-		if(pipe(pipes[q])<0)
-		{
-			printf("Errore creazione pipe di indice q = %d\n", q);
-			exit(5);
+ 
+	for(n=0;n<Q;n++){
+		if ((pid = fork()) < 0) { /* creazione con verifica del processo figlio */
+			/* fork fallita */
+			printf("Errore in fork\n");
+			exit(-1);
 		}
+		if (pid == 0) {
+		 /* codice eseguito dal processo figlio*/
 
-	/* ciclo di creazione dei figli */
-	for (q=0; q<Q; q++)
-	{
-		if ((pid=fork())<0)
-		{
-			printf("Errore creazione figlio %d-esimo\n", q);
-			exit(6);
-		}
-	
-		if (pid == 0)
-		{ 	/* codice  del figlio Pq */
-			printf("DEBUG-Sono il figlio %d e sono associato al file %s e al carattere %c\n", getpid(), argv[1], argv[q+3][0]);
-			/* tutti i figli sono associati all'unico file */
-			/* nel caso di errore in un figlio decidiamo di ritornare il valore -1 che sara' interpretato dal padre come 255 (valore NON ammissibile) */
-
-			/* chiusura  dei lati delle pipe non usate nella sincronizzazione */
-			/* per capire le chiusure, fare riferimento al commento riportato per l'array pipes */
-			for (j=0;j<Q+1;j++)
+			/* Chiusura del canale di lettura di N pipe */
+			for (int j=0;j<Q+1;j++)
 			{	
-				if (j!=q)
-					close (pipes[j][0]);
-				if (j != (q+1))
-					close (pipes[j][1]);
+				if (j!=n)
+					close (pipeRing[j][0]);
+				if (j != (n+1))
+					close (pipeRing[j][1]);
 			}
-	
-			/* apriamo il file in lettura; N.B.: tutti i figli aprono lo stesso file perche' devono avere l'I/O pointer separato! */
-			if ((fd=open(argv[1],O_RDONLY))<0)
-			{
-				printf("Errore: Impossibile aprire il file %s\n", argv[1]);
-				exit(-1);
+
+			/* controllo che il parametro sia un file */
+			if((F=open(argv[1],O_RDWR)) < 0 ){ //APRO IL FILE
+			   printf("ERRORE: parametro %s non valido\nSUGGERIMENTO: inserire il nome di un file\n",argv[1]);
+			   exit(-1);
 			}
-	
-			/* inizializziamo il contatore occorrenze del carattere cercato per ogni singola linea */
-			nrChar= 0;
-			/* con un ciclo leggiamo tutte le linee, come richiede la specifica */
-       	 		while (read(fd,&ch,1) != 0)
-        		{
-          			if (ch == '\n') /* siamo a fine linea */
-                		{
-					/* dobbiamo aspettare l'ok dal figlio precedente per scrivere */
-                			nr=read(pipes[q][0],&ok,sizeof(char));
-        				/* per sicurezza controlliamo il risultato della lettura da pipe */
-                			if (nr != sizeof(char))
-                			{
-                       				printf("Errore: Figlio %d ha letto un numero di byte sbagliati %d\n", q, nr);
-                       				exit(-1);
-                			}
 
-					/* a questo punto si deve riportare su standard output l'indice e il pid del processo corrente, il numero di occorrenze del proprio carattere associato presenti nella linea corrente e il carattere associato */
-                			printf("Figlio con indice %d e pid %d ha letto %d caratteri %c nella linea corrente\n", q, getpid(), nrChar, argv[q+3][0]);
-					/* ora si deve mandare l'OK in avanti: nota che il valore della variabile ok non ha importanza */
-        				nw=write(pipes[q+1][1],&ok,sizeof(char));
-        				/* anche in questo caso controlliamo il risultato della scrittura */
-        				if (nw != sizeof(char))
-        				{
-               					printf("Errore: Figlio %d ha scritto un numero di byte sbagliati %d\n", q, nw);
-               					exit(-1);
-        				}
-					/* si deve azzerare il conteggio delle occorrenze, dopo averlo salvato per poterlo tornare correttamente, nel caso la linea corrente sia l'ultima! */
-					ritorno = nrChar;
-					nrChar = 0;	/* riazzieriamo il contatore per la prossima linea */
-        			}	
-				else
-                       		{
-					/* se non siamo a fine linea dobbiamo fare il controllo sul carattere corrente */
-          				if (ch == argv[q+3][0]) /* se abbiamo letto il carattere da cercare incrementiamo il contatore delle occorrenze */
-						nrChar++;
-        			}			
-        		}		
+			nChar=0;
+       	 	while (read(F,&Cx,1) == 1){
+				if(Cx == '\n'){
+					int nr=read(pipeRing[n][0],&token,sizeof(char));
+        			/* per sicurezza controlliamo il risultato della lettura da pipe */
+                	if (nr != sizeof(char))
+                	{
+                    		printf("Errore: Figlio %d ha letto un numero di byte sbagliati %d\n", n, nr);
+                    		exit(-1);
+                	}                	printf("Figlio con indice %d e pid %d ha letto %d caratteri %c nella linea corrente\n", n, getpid(), nChar, argv[n+3][0]);
+					write(pipeRing[n+1][1],&token,sizeof(char));
+					ritorno=nChar;
+					nChar=0;
+				}else{
+					if(Cx == argv[n+3][0]){
+						nChar++;
+					}
+				}
+				
 
-			/* ogni figlio deve tornare il numero di occorrenze del proprio carattere trovate nell'ultima linea */
-			exit(ritorno);
+			}
+					   
+		   exit(ritorno);
 		}
-	} /* fine for */
-
-	/* codice del padre */
-	/* chiusura di tutte le pipe che non usa, a parte la prima e l'ultima */
-	for (q=0; q < Q+1; q++) 
-	{
-		if (q != Q)	close (pipes[q][0]);
-		if (q != 0) 	close (pipes[q][1]); 
 	}
-	/* N.B. Poiche' in questo caso il padre e' nel ring, non ci sono problemi di dover lasciare aperti lati di pipe che il padre non usa! */
 
-	for (j=0; j < L; j++)	/* per ogni linea del file */
+	/* Chiudo tutte le pipe inutili */
+	for(n=0;n<Q + 1;n++){
+
+		if(n != 0){
+			close(pipeRing[n][1]);
+		}
+		if(n != Q){
+			close(pipeRing[n][0]);
+		}
+
+	}
+
+
+
+	for (int j=0; j < L; j++)	/* per ogni linea del file */
        	{
 		/* il padre deve riportare il numero di linea correntemente analizzata dai figli, insieme con il nome del file */
 		printf("Linea %d del file %s\n", j+1, argv[1]);	/* il numero di linea deve partire da 1! */
 		/* il padre deve inviare l'OK di sincronizzazione al processo di indice 0 */
-		nw=write(pipes[0][1],&ok,sizeof(char));
+		int nw=write(pipeRing[0][1],&token,sizeof(char));
 		/* anche in questo caso controlliamo il risultato della scrittura */
 		if (nw != sizeof(char))
 		{
@@ -171,7 +138,7 @@ int main (int argc, char **argv)
 		}
 
 		/* il padre quindi deve aspettare che l'ultimo figlio gli invii l'OK di sincronizzazione per fare ripartire il ring */
-		nr=read(pipes[Q][0],&ok,sizeof(char));
+		int nr=read(pipeRing[Q][0],&token,sizeof(char));
         	/* per sicurezza controlliamo il risultato della lettura da pipe */
                 if (nr != sizeof(char))
                 {
@@ -180,22 +147,29 @@ int main (int argc, char **argv)
                 }
         }
 
-	/* Il padre aspetta i figli */
-	for (q=0; q < Q; q++)
-	{
-        	if ((pidFiglio = wait(&status)) < 0)
-        	{
-                	printf("Errore in wait\n");
-                	exit(8);
-        	}
-        	if ((status & 0xFF) != 0)
-                	printf("Figlio con pid %d terminato in modo anomalo\n", pidFiglio);
-        	else
-        	{	 
-			ritorno=(int)((status >> 8) & 0xFF);
-        		printf("Il figlio con pid=%d ha ritornato %d (se 255 problemi)\n", pidFiglio, ritorno);
-        	} 
-	}
+	for(n=0;n<Q;n++){
+
+
+		if((pidFiglio = wait(&status)) < 0){ // assegamo a pid il pid del figlio e a status lo stato del filgio 
+			printf("ERRORE: wait ha fallito\n");
+			exit(-1);
+		}
+		if ((status & 0xFF) != 0){ //verificare che lo status sia valido2
+		   printf("Figlio terminato in modo anomalo\n");
+			exit(-2);
+		}else { //estraggo il valore passato dal figlio
+			ritorno = status >> 8;
+			/* selezione degli 8 bit piu’ significativi */
+			ritorno &= 0xFF;
+			printf("Il figlio con pid=%d ha ritornato %d (se 255 problemi)\n", pidFiglio, ritorno);
+			
+		}	
+
+
+	}	
+
+
+
 
 	exit(0);
 }
