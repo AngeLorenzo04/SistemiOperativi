@@ -9,7 +9,7 @@
 #include <errno.h> //ERror NUmber: errno
 #include <sys/types.h> //SYStem TYPES: pid_t
 #include <ctype.h> //ISoType: isdigit, isalpha, isalnum
-#define PERM 077 /*Permessi da dare al file creato*/
+#define PERM 777 /*Permessi da dare al file creato*/
 typedef int pipe_t[2]; /* Tipo per creare più pipe */
 
 
@@ -19,9 +19,9 @@ int main(int argc, char* argv[]) {
     int outfile;                  /* file descriptor */
     char buffer[BUFSIZ];                 /* Buffer dove verra memorizzato il carattere che stiamo analizzando */
     int pid;                      /* Variabile che conterrà il valore di ritorno di fork */
-    // int status;                   /* Variabile che conterrà lo stato di un figlio */
-    // int pidFiglio;                /* Variabile che conterrà il pid del figlio*/
-    // int ritorno;                  /* Variabile che conterrà il ritrono del filgio*/
+    int status;                   /* Variabile che conterrà lo stato di un figlio */
+    int pidFiglio;                /* Variabile che conterrà il pid del figlio*/
+    int ritorno;                  /* Variabile che conterrà il ritrono del filgio*/
     int n;                        /* Variabile per scorrere */
     int N;                        /* Varibile che conterrà il numero */
     pipe_t* pipePadreFigli;       /* Canale di comunicazione padre-filgio */
@@ -49,8 +49,7 @@ int main(int argc, char* argv[]) {
        printf("DEBUG-FILGIO Impossibile creare il file %s\n", argv[2]);
        exit(-1);
     }
-    /* chiudiamo il file creato dato che comunque il figlio non lo usa */
-    close(outfile);
+
 
 
     /* allocazione dell'array di N pipe */
@@ -82,7 +81,7 @@ int main(int argc, char* argv[]) {
             for(int k=0;k<N;k++){
                close(pipePadreFigli[k][0]);
                if(k != n){
-                    close(pipePadreFigli[k][1]); /* Chiusura dei canali di scrittura che non ci interessano */
+                  close(pipePadreFigli[k][1]); /* Chiusura dei canali di scrittura che non ci interessano */
                }
             }
 
@@ -119,6 +118,8 @@ int main(int argc, char* argv[]) {
 
             }
 
+            close(pipeFigliNipoti[1]);
+
             /*IL FIGLIO NON FA LA WAIT DEL NIPOTE DATO CHE LAVORANO CONCORRENTEMENTE*/
 
             sprintf(buffer,"%d",pid); /* salvo nel buffer il pid del nipote */
@@ -152,17 +153,34 @@ int main(int argc, char* argv[]) {
     {
         int j=0; /* inizializziamo l'indice della linea per la singola linea inviata da ogni figlio */
 	/* per ogni figlio si devono leggere le informazioni che il figlio con la grep ha scritto sul suo standard output che corrisponde al lato di scrittura della pipe piped[n]; il padre legge, a questo punto, dal lato di lettura di questa pipe */
-        while (read(pipePadreFigli[n][0], &(buffer[j]), 1))
+        while (read(pipePadreFigli[n][0], buffer + j, 1) == 1)
         {
           	/* dato che arriva una sola linea leggiamo tutti i caratteri dalla pipe */
             j++; /* incrementiamo l'indice della linea */
         }
 	/* scriviamo sul file, creato precedentemente, il numero di caratteri corretti e quindi anche con il terminatore di linea! N.B. Il valore di j e' stato incrementato e quindi e' giusto! */
-	    write(outfile, buffer, j);	
+	      write(outfile, buffer, j);	
     }
-    
+
+    /* chiudiamo il file creato dato che comunque il figlio non lo usa */
+    close(outfile);
 
 
+    for(n=0;n<N;n++){
+      if((pidFiglio = wait(&status)) < 0){ // assegamo a pid il pid del figlio e a status lo stato del filgio 
+          printf("ERRORE: wait ha fallito\n");
+          exit(-1);
+      }
+      if ((status & 0xFF) != 0){ //verificare che lo status sia valido2
+         printf("Figlio terminato in modo anomalo\n");
+          exit(-1);
+      }else { //estraggo il valore passato dal figlio
+          ritorno = status >> 8;
+          /* selezione degli 8 bit piu’ significativi */
+          ritorno &= 0xFF;
+          printf("Il filglio %d ha terminato con %d\n",pidFiglio,ritorno);
+      }
+    }
 
     exit(0);
 }
