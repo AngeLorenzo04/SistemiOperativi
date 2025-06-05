@@ -106,16 +106,22 @@ int main(int argc, char* argv[]) {
                             }else i++;
                         }
                         LINE[i] = '\0';
-                        break;
 
+                        break;
 
                     }else i = 0; /* questo mi permette di occupare solo il primio carattere del buffer */
 
                 }
+
                 break; /* indispensabile nel caso in cui m==0 si rischia di entrare in un loop infinito*/
             }
 
-            write(pipeLine[m][1],&token,1); /* Do il comando al figlio successivo di proseguire */
+
+
+
+            if(m != M-1){
+                write(pipeLine[m][1],&token,1); /* Do il comando al figlio successivo di proseguire */
+            }
 
             if ((pid = fork()) < 0) { /* creazione con verifica del processo Nipote */
                 /* fork fallita */
@@ -124,7 +130,6 @@ int main(int argc, char* argv[]) {
             }
             if (pid == 0) {
              /* codice eseguito dal processo Nipote*/
-               
              /* File memorizzato in LINE quindi non serve redirigere l'input */
              /* Comando chmod non da messaggi in outpu in caso di successo*/
              /* Comando chmod da un messaggio su standard err quando il comando non e' valido per cui redirigo err */
@@ -139,6 +144,8 @@ int main(int argc, char* argv[]) {
              /* IL NIPOTE E' DIVENTATO IL COMANDO CHMOD NON DEVE RITORNARE !!*/
             }
 
+
+
             if((pidNipote = wait(&status)) < 0){ // assegamo a pid il pid del figlio e a status lo stato del filgio 
                 printf("ERRORE: wait ha fallito\n");
                 exit(-1);
@@ -151,6 +158,7 @@ int main(int argc, char* argv[]) {
                 /* selezione degli 8 bit piu’ significativi */
                 ritorno &= 0xFF;
             }
+
 
            exit(ritorno); /* Ritorno il risultato ricevuto dal nipote */
         }
