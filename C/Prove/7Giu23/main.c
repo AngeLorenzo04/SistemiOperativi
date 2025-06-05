@@ -87,8 +87,8 @@ int main(int argc, char* argv[]) {
             close(pipeFIglioPadre[k][0]);
             close(pipePadreFiglio[k][1]);
             if(k != n){
-                 close(pipeFIglioPadre[k][1]); /* Chiusura dei canali di scrittura che non ci interessano */
-                 close(pipePadreFiglio[k][0]);
+                close(pipeFIglioPadre[k][1]); /* Chiusura dei canali di scrittura che non ci interessano */
+                close(pipePadreFiglio[k][0]);
             }
          }
 
@@ -105,14 +105,16 @@ int main(int argc, char* argv[]) {
 
             if(car[1] == '\n' || car[1] == '\0'){
                 write(pipeFIglioPadre[n][1],&car,1);
+                printf("ATTESA LETTURA FIGLIO %d\n",n);
                 while (read(pipePadreFiglio[n][0],&token,1)){
-                    printf("DEBUG-FIGLIO token: %c\n",token);
+                    printf("DEBUG-FIGLIO %d token: %c\n",n,token);
                     if(token == 'S'){
                         i++;
                         printf("\nDEBUG FILGIO\nprocesso num: %d\nPID: %d\n car: %c\n",n,getpid(),car[0]);
+                    }else{
+                        ;
                     }
                 }
-                
             }
 
          }
@@ -137,7 +139,9 @@ int main(int argc, char* argv[]) {
     i=0;
     for(n=0;n<N;n++){
 
+        printf("ATTESA LELTTURA PADRE ...\n");
         read(pipeFIglioPadre[n][0],&car,1);
+        printf("valore da analizzare %c massimo %c iterazione: %d\n",car[0],max,n);
         if((int)car[0] > (int)max){
             max=car[0];
             i=n;
@@ -149,6 +153,8 @@ int main(int argc, char* argv[]) {
         if(n != i){
             token='X';
             write(pipePadreFiglio[n][1],&token,1);
+            break;
+
         }else{
             token = 'S';
             write(pipePadreFiglio[n][1],&token,1);
@@ -156,7 +162,9 @@ int main(int argc, char* argv[]) {
         }
     }
 
-
+    for(n=0;n<N;n++){
+        close(pipePadreFiglio[n][1]);
+    }
 
     for(n=0;n<N;n++){
 
