@@ -72,7 +72,6 @@ int main(int argc, char* argv[]) {
         if (pid == 0) {
          /* codice eseguito dal processo figlio*/
            
-            printf("\n FIGLIO %d pid %d\n\n",m,getpid());
 
 
             for(int k=0;k<M;k++){
