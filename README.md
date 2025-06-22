@@ -20,33 +20,33 @@ The exercises are based on topics covered in the Operating Systems course held b
 
 ---
 
-# 📌 How to Add a Code Snippet in Visual Studio Code
+## 📌 How to Add a Code Snippet in Visual Studio Code
 
 Visual Studio Code (VS Code) allows you to create **custom code snippets** to speed up repetitive coding tasks. This guide will walk you through the steps to add your own snippets.
 
-## 🔧 What is a Snippet?
+### 🔧 What is a Snippet?
 
 A snippet is a code template you can trigger with a keyword (`prefix`). It helps you avoid writing the same code repeatedly by expanding a shortcut into a full block of code.
 
 ---
 
-## 🪛 Steps to Add a Snippet
+### 🪛 Steps to Add a Snippet
 
-### 1. Open the Snippet Configuration
+#### 1. Open the Snippet Configuration
 
 1. Open **VS Code**.
 2. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (macOS).
 3. Search and select: `Preferences: Configure User Snippets`.
 
-### 2. Choose the Snippet File
+#### 2. Choose the Snippet File
 
 - You can choose to:
   - Add a snippet for a **specific language** (e.g. `javascript.json`, `python.json`, etc.)
   - Use `global.code-snippets` to make the snippet available in **all languages**.
 
-### 3. Add Your Snippet
+#### 3. Add Your Snippet
  - You will find the snippet in the folder snippets
-    - linguages used are `shellscript` `makefile` `C` 
+    - languages used are `shellscript` `makefile` `C` 
 
 
 ---
