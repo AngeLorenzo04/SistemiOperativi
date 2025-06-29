@@ -144,14 +144,15 @@
 			"    ritorno = status >> 8;",
 			"    /* selezione degli 8 bit piu’ significativi */",
 			"    ritorno &= 0xFF;",
+			"    printf(\"Il filgio %d con pid %d ha ritornato %d\\n\",n,pidFiglio,ritorno);",
 			"}"
 		]
 	},
 	"read" :{
 		"prefix": "read",
 		"body": [
-			"if((read($1,$2,$3)) < 0){ /* Leggo il contenuto del file */",
-			"   printf(\"Errore nella lettura $4\");",
+			"if((read($1,$2,$3)) < 0){ /* Leggo */",
+			"   printf(\"ERRORE: qualcosa è andato storto nella letttura $4\");",
 			"   exit(-1);",
 			"}"
 		]
@@ -159,8 +160,8 @@
 	"write" :{
 		"prefix": "write",
 		"body": [
-			"if((write($1,$2,$3)) < 0){ /* Leggo il contenuto del file */",
-			"   printf(\"Errore nella lettura $4\");",
+			"if((write($1,$2,$3)) < 0){ /* Scrivo */",
+			"   printf(\"ERRORE: qualcosa è andato storto nella scrittura $4\\n\");",
 			"   exit(-1);",
 			"}"
 		]
