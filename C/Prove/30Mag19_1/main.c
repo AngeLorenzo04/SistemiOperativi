@@ -21,15 +21,15 @@ int main(int argc, char* argv[]) {
     
     /*------ VARIABILI USATE ------*/
     char str[250];
-    int pid;                   /* Variabile che conterrà il valore di ritorno di fork */
-    int status;                /* Variabile che conterrà lo stato di un figlio */
-    int pidFiglio;             /* Variabile che conterrà il pid del figlio*/
-    int ritorno;               /* Variabile che conterrà il ritrono del filgio*/
-    int N;                     /* Numero di figli */
-    int n,i;                     /* Contatore */
-    pipe_t* pipePadreFiglio;   /* Canale di comunicazione padre-filgio */
-    pipe_t pipeFiglioNipote;   /* Canale di comunicazione padre-filgio */
-    struct_t S;               /* Array di strutture */
+    int pid;                    /* Variabile che conterrà il valore di ritorno di fork */
+    int status;                 /* Variabile che conterrà lo stato di un figlio */
+    int pidFiglio;              /* Variabile che conterrà il pid del figlio*/
+    int ritorno;                /* Variabile che conterrà il ritrono del filgio*/
+    int N;                      /* Numero di figli */
+    int n,i;                    /* Contatore */
+    pipe_t* pipePadreFiglio;    /* Canale di comunicazione padre-filgio */
+    pipe_t pipeFiglioNipote;    /* Canale di comunicazione padre-filgio */
+    struct_t S;                 /* Array di strutture */
 
 
 
