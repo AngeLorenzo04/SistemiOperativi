@@ -1,0 +1,26 @@
+{
+	"LASCO":{
+		"prefix": "lasco",
+		"body": [
+			"#Controllo comandi LASCO",
+			"if test $# -lt $0",
+			"then",
+			"   echo ERRORE: numero parametri non valido",
+			"   echo SUGGERIMENTO: inserire almeno $0 parametri",
+			"   exit $1",
+			"fi"
+		]
+	},
+	"STRETTO":{
+		"prefix": "stretto",
+		"body": [
+			"#Controllo comandi STRETTO",
+			"if test $# -ne $0",
+			"then",
+			"   echo ERRORE: numero parametri non valido",
+			"   echo SUGGERIMENTO: inserire esattamente $0 parametri",
+			"   exit $1",
+			"fi"
+		]
+	}
+}
