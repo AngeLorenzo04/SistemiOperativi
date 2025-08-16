@@ -1,7 +1,6 @@
 #!/bin/bash
 #File Comandi Ricorsivo inerente alla prova d'esame del 19 Febraio 2024
 
-echo 1-$1
 #mi sposto nella cartella che sto analizzando
 cd $1
 
@@ -12,7 +11,6 @@ tmp=$3
 #Cerco le occorrenze
 for i in *
 do
-    echo DEBUG-Analizzo $i
     if test -f $i -a -r $i
     then
         len=`wc -l < $i`
