@@ -323,7 +323,7 @@ Questa guida raccoglie i principali comandi di **Unix/Linux Shell** divisi per a
   man ls
   ```
 
-- **which / whereis** → posizione dei comandi
+- **which / whereis** → posizione dei comandi e manuali
   ```bash
   which ls
   whereis bash
