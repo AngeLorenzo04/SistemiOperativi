@@ -180,7 +180,10 @@ Questa guida raccoglie i principali comandi di **Unix/Linux Shell** divisi per a
   ```
   🔑 Notazione numerica:
   - r = 4, w = 2, x = 1
-  - 7 = rwx, 6 = rw-, 5 = r-x, 4 = r--
+  - 7 = rwx, 6 = rw-, 5 = r-x, 3 = -wx
+  - u: user
+  - g: group
+  - o: others
 
 - **chown** → cambia proprietario
   ```bash
